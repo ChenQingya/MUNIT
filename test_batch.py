@@ -50,6 +50,7 @@ config = get_config(opts.config)
 input_dim = config['input_dim_a'] if opts.a2b else config['input_dim_b']
 
 # Load the inception networks if we need to compute IS or CIIS
+# 评估指标Inception Score
 if opts.compute_IS or opts.compute_IS:
     inception = load_inception(opts.inception_b) if opts.a2b else load_inception(opts.inception_a)
     # freeze the inception models and set eval mode
@@ -104,7 +105,7 @@ if opts.trainer == 'MUNIT':
         for j in range(opts.num_style):
             s = style[j].unsqueeze(0)
             outputs = decode(content, s)
-            outputs = (outputs + 1) / 2.
+            outputs = (outputs + 1) / 2.    # outputs是什么结果？
             if opts.compute_IS or opts.compute_CIS:
                 pred = F.softmax(inception(inception_up(outputs)), dim=1).cpu().data.numpy()  # get the predicted class distribution
             if opts.compute_IS:
