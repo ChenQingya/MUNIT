@@ -184,17 +184,19 @@ class VAEGen(nn.Module):
 ##################################################################################
 # Encoder and Decoders
 ##################################################################################
-
+# style encoder 和 content encoder有什么区别？
 class StyleEncoder(nn.Module):
     def __init__(self, n_downsample, input_dim, dim, style_dim, norm, activ, pad_type):
         super(StyleEncoder, self).__init__()
         self.model = []
-        self.model += [Conv2dBlock(input_dim, dim, 7, 1, 3, norm=norm, activation=activ, pad_type=pad_type)]
+        self.model += [Conv2dBlock(input_dim, dim, 7, 1, 3, norm=norm, activation=activ, pad_type=pad_type)]    # 与content encoder相同
+
+        # 与content encoder不同的部分：n_downsample前两层不同，多了adaptiveAvgPool和Conv2d
         for i in range(2):
             self.model += [Conv2dBlock(dim, 2 * dim, 4, 2, 1, norm=norm, activation=activ, pad_type=pad_type)]
             dim *= 2
         for i in range(n_downsample - 2):
-            self.model += [Conv2dBlock(dim, dim, 4, 2, 1, norm=norm, activation=activ, pad_type=pad_type)]
+            self.model += [Conv2dBlock(dim, dim, 4, 2, 1, norm=norm, activation=activ, pad_type=pad_type)]      # 与style encoder 相同
         self.model += [nn.AdaptiveAvgPool2d(1)] # global average pooling
         self.model += [nn.Conv2d(dim, style_dim, 1, 1, 0)]
         self.model = nn.Sequential(*self.model)
@@ -208,6 +210,8 @@ class ContentEncoder(nn.Module):
         super(ContentEncoder, self).__init__()
         self.model = []
         self.model += [Conv2dBlock(input_dim, dim, 7, 1, 3, norm=norm, activation=activ, pad_type=pad_type)]
+
+        # 与style encoder不同的部分：n_downsample前两层，多了resblocks
         # downsampling blocks
         for i in range(n_downsample):
             self.model += [Conv2dBlock(dim, 2 * dim, 4, 2, 1, norm=norm, activation=activ, pad_type=pad_type)]
