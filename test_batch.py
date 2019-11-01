@@ -20,6 +20,7 @@ except ImportError: # will be 3.x series
 import sys
 import torch
 import os
+from torchvision.models.inception import inception_v3
 
 
 parser = argparse.ArgumentParser()
@@ -34,10 +35,12 @@ parser.add_argument('--synchronized', action='store_true', help="whether use syn
 parser.add_argument('--output_only', action='store_true', help="whether use synchronized style code or not")
 parser.add_argument('--output_path', type=str, default='.', help="path for logs, checkpoints, and VGG model weight")
 parser.add_argument('--trainer', type=str, default='MUNIT', help="MUNIT|UNIT")
-parser.add_argument('--compute_IS', action='store_true', help="whether to compute Inception Score or not")
-parser.add_argument('--compute_CIS', action='store_true', help="whether to compute Conditional Inception Score or not")
+parser.add_argument('--compute_IS', action='store_true', default=True, help="whether to compute Inception Score or not")
+parser.add_argument('--compute_CIS', action='store_true', default=True, help="whether to compute Conditional Inception Score or not")
 parser.add_argument('--inception_a', type=str, default='.', help="path to the pretrained inception network for domain A")
 parser.add_argument('--inception_b', type=str, default='.', help="path to the pretrained inception network for domain B")
+parser.add_argument('--cuda', type=bool, default=True, help="")
+
 
 opts = parser.parse_args()
 
@@ -52,7 +55,16 @@ input_dim = config['input_dim_a'] if opts.a2b else config['input_dim_b']
 # Load the inception networks if we need to compute IS or CIIS
 # 评估指标Inception Score
 if opts.compute_IS or opts.compute_IS:
-    inception = load_inception(opts.inception_b) if opts.a2b else load_inception(opts.inception_a)
+    # Set up dtype
+    if opts.cuda:
+        dtype = torch.cuda.FloatTensor
+    else:
+        if torch.cuda.is_available():
+            print("WARNING: You have a CUDA device, so you should probably set cuda=True")
+        dtype = torch.FloatTensor
+
+    # inception = load_inception(opts.inception_b) if opts.a2b else load_inception(opts.inception_a)
+    inception = inception_v3(pretrained=True, transform_input=False).type(dtype)
     # freeze the inception models and set eval mode
     inception.eval()
     for param in inception.parameters():
@@ -61,7 +73,10 @@ if opts.compute_IS or opts.compute_IS:
 
 # Setup model and data loader
 image_names = ImageFolder(opts.input_folder, transform=None, return_paths=True)
-data_loader = get_data_loader_folder(opts.input_folder, 1, False, new_size=config['new_size_a'], crop=False)
+# data_loader = get_data_loader_folder(opts.input_folder, 1, False, new_size=config['new_size_a'], crop=False)
+# 参考test.py中的new_size做如下改动
+data_loader = get_data_loader_folder(opts.input_folder, 1, False, new_size=config['new_size'], crop=False)
+
 
 config['vgg_model_path'] = opts.output_path
 if opts.trainer == 'MUNIT':
