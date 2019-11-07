@@ -40,6 +40,8 @@ parser.add_argument('--compute_CIS', action='store_true', default=True, help="wh
 parser.add_argument('--inception_a', type=str, default='.', help="path to the pretrained inception network for domain A")
 parser.add_argument('--inception_b', type=str, default='.', help="path to the pretrained inception network for domain B")
 parser.add_argument('--cuda', type=bool, default=True, help="")
+parser.add_argument('--suffix', type=str, default='',help='suffix for date')
+parser.add_argument('--gpu_ids',type=str, default='0',help='gpu ids: e.g. 0  0,1,2, 0,2. use -1 for CPU')
 
 
 opts = parser.parse_args()
@@ -47,6 +49,16 @@ opts = parser.parse_args()
 
 torch.manual_seed(opts.seed)
 torch.cuda.manual_seed(opts.seed)
+
+# set gpu ids
+str_ids = opts.gpu_ids.split(',')
+opts.gpu_ids = []
+for str_id in str_ids:
+    id = int(str_id)
+    if id >= 0:
+        opts.gpu_ids.append(id)
+if len(opts.gpu_ids) > 0:
+    torch.cuda.set_device(opts.gpu_ids[0])
 
 # Load experiment setting
 config = get_config(opts.config)

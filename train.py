@@ -22,9 +22,21 @@ parser.add_argument('--config', type=str, default='configs/edges2handbags_folder
 parser.add_argument('--output_path', type=str, default='.', help="outputs path")
 parser.add_argument("--resume", action="store_true")
 parser.add_argument('--trainer', type=str, default='MUNIT', help="MUNIT|UNIT")
+parser.add_argument('--suffix', type=str, default='',help='suffix for date')
+parser.add_argument('--gpu_ids',type=str, default='0',help='gpu ids: e.g. 0  0,1,2, 0,2. use -1 for CPU')
 opts = parser.parse_args()
 
 cudnn.benchmark = True
+
+# set gpu ids
+str_ids = opts.gpu_ids.split(',')
+opts.gpu_ids = []
+for str_id in str_ids:
+    id = int(str_id)
+    if id >= 0:
+        opts.gpu_ids.append(id)
+if len(opts.gpu_ids) > 0:
+    torch.cuda.set_device(opts.gpu_ids[0])
 
 # Load experiment setting
 config = get_config(opts.config)
@@ -48,8 +60,8 @@ test_display_images_b = torch.stack([test_loader_b.dataset[i] for i in range(dis
 
 # Setup logger and output folders
 model_name = os.path.splitext(os.path.basename(opts.config))[0]
-train_writer = tensorboardX.SummaryWriter(os.path.join(opts.output_path + "/logs", model_name))
-output_directory = os.path.join(opts.output_path + "/outputs", model_name)
+train_writer = tensorboardX.SummaryWriter(os.path.join(opts.output_path + "/logs", model_name + '_' + opts.suffix))
+output_directory = os.path.join(opts.output_path + "/outputs", model_name + '_' + opts.suffix)
 checkpoint_directory, image_directory = prepare_sub_folder(output_directory)
 shutil.copy(opts.config, os.path.join(output_directory, 'config.yaml')) # copy config file to output folder
 
