@@ -117,10 +117,10 @@ if opts.trainer == 'MUNIT':
         images = Variable(images.cuda(), volatile=True)
         content, _ = encode(images)
         style = style_fixed if opts.synchronized else Variable(torch.randn(opts.num_style, style_dim, 1, 1).cuda(), volatile=True)
-        for j in range(opts.num_style):
+        for j in range(opts.num_style):     # 生成十种风格的图片
             s = style[j].unsqueeze(0)
-            outputs = decode(content, s)
-            outputs = (outputs + 1) / 2.    # outputs是什么结果？
+            outputs = decode(content, s)    # 先encode，再decode得到生成的图片
+            outputs = (outputs + 1) / 2.    # outputs是什么结果？（猜测这里是归一化，让output的值在一定范围内）
             if opts.compute_IS or opts.compute_CIS:
                 pred = F.softmax(inception(inception_up(outputs)), dim=1).cpu().data.numpy()  # get the predicted class distribution
             if opts.compute_IS:

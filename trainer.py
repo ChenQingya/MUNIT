@@ -122,7 +122,7 @@ class MUNIT_Trainer(nn.Module):
         target_fea = vgg(target_vgg)
         return torch.mean((self.instancenorm(img_fea) - self.instancenorm(target_fea)) ** 2)
 
-    def sample(self, x_a, x_b):
+    def sample(self, x_a, x_b): # 生成出新的图，相当于generated images
         self.eval()
         s_a1 = Variable(self.s_a)
         s_b1 = Variable(self.s_b)
